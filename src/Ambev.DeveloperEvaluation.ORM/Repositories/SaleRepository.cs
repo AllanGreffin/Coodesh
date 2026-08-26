@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Ambev.DeveloperEvaluation.Domain.Entities;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -57,6 +58,18 @@ public class SaleRepository : ISaleRepository
         if (filter.IsCancelled is { } isCancelled)
             query = query.Where(s => s.IsCancelled == isCancelled);
 
+        if (filter.MinDate is { } minDate)
+        {
+            var min = AsUtc(minDate);
+            query = query.Where(s => s.SaleDate >= min);
+        }
+
+        if (filter.MaxDate is { } maxDate)
+        {
+            var max = AsUtc(maxDate);
+            query = query.Where(s => s.SaleDate <= max);
+        }
+
         query = ApplyOrdering(query, filter.Order);
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -95,17 +108,58 @@ public class SaleRepository : ISaleRepository
         return true;
     }
 
+    /// <summary>
+    /// Applies a possibly multi-field ordering expression such as
+    /// <c>"totalAmount desc, saleNumber asc"</c>. Unknown fields fall back to the sale date;
+    /// direction defaults to ascending, and with no expression the list is newest-first.
+    /// </summary>
     private static IQueryable<Sale> ApplyOrdering(IQueryable<Sale> query, string? order)
     {
-        var descending = order?.Contains("desc", StringComparison.OrdinalIgnoreCase) ?? true;
-        var field = (order ?? "saleDate").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(order))
+            return query.OrderByDescending(s => s.SaleDate);
 
-        return field switch
+        IOrderedQueryable<Sale>? ordered = null;
+
+        foreach (var segment in order.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
-            "salenumber" => descending ? query.OrderByDescending(s => s.SaleNumber) : query.OrderBy(s => s.SaleNumber),
-            "totalamount" => descending ? query.OrderByDescending(s => s.TotalAmount) : query.OrderBy(s => s.TotalAmount),
-            "createdat" => descending ? query.OrderByDescending(s => s.CreatedAt) : query.OrderBy(s => s.CreatedAt),
-            _ => descending ? query.OrderByDescending(s => s.SaleDate) : query.OrderBy(s => s.SaleDate),
-        };
+            var tokens = segment.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var descending = tokens.Length > 1 && tokens[1].Equals("desc", StringComparison.OrdinalIgnoreCase);
+
+            ordered = tokens[0].ToLowerInvariant() switch
+            {
+                "salenumber" => AddSort(ordered, query, s => s.SaleNumber, descending),
+                "totalamount" => AddSort(ordered, query, s => s.TotalAmount, descending),
+                "createdat" => AddSort(ordered, query, s => s.CreatedAt, descending),
+                "customername" => AddSort(ordered, query, s => s.CustomerName, descending),
+                "branchname" => AddSort(ordered, query, s => s.BranchName, descending),
+                _ => AddSort(ordered, query, s => s.SaleDate, descending),
+            };
+        }
+
+        return ordered!;
+    }
+
+    /// <summary>
+    /// Normalizes a date filter to UTC. PostgreSQL <c>timestamp with time zone</c> columns
+    /// only accept UTC through Npgsql; a bare date from the query string comes in as
+    /// <see cref="DateTimeKind.Unspecified"/> and is treated as already being UTC.
+    /// </summary>
+    private static DateTime AsUtc(DateTime value) => value.Kind switch
+    {
+        DateTimeKind.Utc => value,
+        DateTimeKind.Local => value.ToUniversalTime(),
+        _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+    };
+
+    private static IOrderedQueryable<Sale> AddSort<TKey>(
+        IOrderedQueryable<Sale>? ordered,
+        IQueryable<Sale> query,
+        Expression<Func<Sale, TKey>> keySelector,
+        bool descending)
+    {
+        if (ordered is null)
+            return descending ? query.OrderByDescending(keySelector) : query.OrderBy(keySelector);
+
+        return descending ? ordered.ThenByDescending(keySelector) : ordered.ThenBy(keySelector);
     }
 }

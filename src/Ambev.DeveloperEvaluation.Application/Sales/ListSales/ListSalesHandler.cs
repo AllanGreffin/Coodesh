@@ -35,7 +35,9 @@ public class ListSalesHandler : IRequestHandler<ListSalesQuery, ListSalesResult>
             CustomerId = request.CustomerId,
             BranchId = request.BranchId,
             IsCancelled = request.IsCancelled,
-            Order = request.Order
+            Order = request.Order,
+            MinDate = request.MinDate,
+            MaxDate = request.MaxDate
         };
 
         var (sales, totalCount) = await _saleRepository.ListAsync(filter, cancellationToken);

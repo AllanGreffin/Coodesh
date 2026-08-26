@@ -11,6 +11,12 @@ public class SaleListFilter
     public Guid? BranchId { get; set; }
     public bool? IsCancelled { get; set; }
 
+    /// <summary>Lower bound (inclusive) for the sale date.</summary>
+    public DateTime? MinDate { get; set; }
+
+    /// <summary>Upper bound (inclusive) for the sale date.</summary>
+    public DateTime? MaxDate { get; set; }
+
     /// <summary>Ordering expression, e.g. <c>"saleDate desc, saleNumber asc"</c>.</summary>
     public string? Order { get; set; }
 }

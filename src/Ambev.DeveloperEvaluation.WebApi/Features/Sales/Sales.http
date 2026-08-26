@@ -22,9 +22,12 @@ Content-Type: application/json
   ]
 }
 
-### List sales (paging + filtering + ordering)
-# o espaco em "saleDate desc" precisa ser %20 senao o runner nao reconhece a request
-GET {{salesUrl}}?page=1&size=10&isCancelled=false&order=saleDate%20desc
+### List sales (paging + filtering + ordering) - convencao do .doc/general-api.md
+# o espaco em "_order" precisa ser %20 senao o runner nao reconhece a request
+GET {{salesUrl}}?_page=1&_size=10&isCancelled=false&_order=totalAmount%20desc,%20saleNumber%20asc
+
+### List sales - filtro por intervalo de data
+GET {{salesUrl}}?_minDate=2026-01-01&_maxDate=2026-12-31&_order=saleDate%20desc
 
 ### Get a sale by id
 GET {{salesUrl}}/00000000-0000-0000-0000-000000000000

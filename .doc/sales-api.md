@@ -17,8 +17,14 @@ Complete CRUD for sales records, plus cancellation operations, built as a vertic
 | `POST` | `/api/sales/{id}/cancel` | Cancel a whole sale |
 | `POST` | `/api/sales/{saleId}/items/{itemId}/cancel` | Cancel a single item |
 
-`GET /api/sales` accepts `page`, `size`, `customerId`, `branchId`, `isCancelled` and
-`order` (e.g. `order=saleDate desc`, `order=totalAmount asc`).
+`GET /api/sales` follows the conventions in [general-api.md](/.doc/general-api.md):
+
+| Query param | Meaning |
+|---|---|
+| `_page`, `_size` | paging (defaults 1 / 10) |
+| `_order` | ordering, e.g. `_order=saleDate desc` or `_order=totalAmount desc, saleNumber asc` |
+| `_minDate`, `_maxDate` | inclusive sale-date range |
+| `customerId`, `branchId`, `isCancelled` | `field=value` filters |
 
 ### Data model
 

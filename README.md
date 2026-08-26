@@ -46,6 +46,55 @@ These business rules define quantity-based discounting tiers and limitations:
    - Maximum limit: 20 items per product
    - No discounts allowed for quantities below 4 items
 
+## Getting Started
+
+### Prerequisites
+
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- Docker (for the PostgreSQL database)
+
+### 1. Start the database
+
+```bash
+docker run --name coodesh-db \
+  -e POSTGRES_DB=developer_evaluation \
+  -e POSTGRES_USER=developer \
+  -e POSTGRES_PASSWORD=ev@luAt10n \
+  -p 5432:5432 -d postgres:13
+```
+
+The connection string is already set in `src/Ambev.DeveloperEvaluation.WebApi/appsettings.json`.
+
+### 2. Apply the migrations
+
+```bash
+dotnet tool restore
+dotnet ef database update \
+  --project src/Ambev.DeveloperEvaluation.ORM \
+  --startup-project src/Ambev.DeveloperEvaluation.WebApi
+```
+
+### 3. Run the API
+
+```bash
+dotnet run --project src/Ambev.DeveloperEvaluation.WebApi
+```
+
+- Swagger UI: `https://localhost:7181/swagger`
+- Ready-to-run requests: `src/Ambev.DeveloperEvaluation.WebApi/Features/Sales/Sales.http`
+
+### Run the tests
+
+```bash
+dotnet test
+```
+
+Unit tests are in `tests/Ambev.DeveloperEvaluation.Unit`. For a coverage report run `./coverage-report.sh` (or `coverage-report.bat` on Windows).
+
+## Sales API
+
+The sales feature — complete CRUD plus sale/item cancellation and the `SaleCreated` / `SaleModified` / `SaleCancelled` / `ItemCancelled` events — is documented in [Sales API](/.doc/sales-api.md).
+
 ## Overview
 This section provides a high-level overview of the project and the various skills and competencies it aims to assess for developer candidates. 
 
