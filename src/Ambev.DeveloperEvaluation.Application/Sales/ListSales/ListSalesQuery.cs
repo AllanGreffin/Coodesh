@@ -10,6 +10,15 @@ public class ListSalesQuery : IRequest<ListSalesResult>
     public int Page { get; set; } = 1;
     public int Size { get; set; } = 10;
 
+    /// <summary>Ordering expression, e.g. <c>"saleDate desc"</c> or <c>"totalAmount desc, saleNumber asc"</c>.</summary>
+    public string? Order { get; set; }
+
+    /// <summary>Optional lower bound (inclusive) for the sale date.</summary>
+    public DateTime? MinDate { get; set; }
+
+    /// <summary>Optional upper bound (inclusive) for the sale date.</summary>
+    public DateTime? MaxDate { get; set; }
+
     /// <summary>Optional filter by customer external identity.</summary>
     public Guid? CustomerId { get; set; }
 
@@ -18,7 +27,4 @@ public class ListSalesQuery : IRequest<ListSalesResult>
 
     /// <summary>Optional filter by cancelled state.</summary>
     public bool? IsCancelled { get; set; }
-
-    /// <summary>Ordering expression, e.g. <c>"saleDate desc"</c> or <c>"totalAmount asc"</c>.</summary>
-    public string? Order { get; set; }
 }
