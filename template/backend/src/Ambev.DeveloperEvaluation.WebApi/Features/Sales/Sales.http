@@ -1,0 +1,54 @@
+# Perfil "https" (padrão do VS / F5):
+@host = https://localhost:7181
+# Perfil "http" (dotnet run --launch-profile http): troque para
+# @host = http://localhost:5119
+@salesUrl = {{host}}/api/sales
+
+### Create a sale
+# item "Beer" qty 5  -> 10% discount ; item "Soda" qty 12 -> 20% discount
+POST {{salesUrl}}
+Content-Type: application/json
+
+{
+  "saleNumber": "SALE-1001",
+  "saleDate": "2026-08-26T10:00:00Z",
+  "customerId": "11111111-1111-1111-1111-111111111111",
+  "customerName": "ACME Ltda",
+  "branchId": "22222222-2222-2222-2222-222222222222",
+  "branchName": "Sao Paulo",
+  "items": [
+    { "productId": "33333333-3333-3333-3333-333333333333", "productName": "Beer", "quantity": 5, "unitPrice": 100.00 },
+    { "productId": "44444444-4444-4444-4444-444444444444", "productName": "Soda", "quantity": 12, "unitPrice": 10.00 }
+  ]
+}
+
+### List sales (paging + filtering + ordering)
+# o espaco em "saleDate desc" precisa ser %20 senao o runner nao reconhece a request
+GET {{salesUrl}}?page=1&size=10&isCancelled=false&order=saleDate%20desc
+
+### Get a sale by id
+GET {{salesUrl}}/00000000-0000-0000-0000-000000000000
+
+### Update a sale (replaces header data and items)
+PUT {{salesUrl}}/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+{
+  "saleDate": "2026-08-27T09:00:00Z",
+  "customerId": "11111111-1111-1111-1111-111111111111",
+  "customerName": "ACME S.A.",
+  "branchId": "22222222-2222-2222-2222-222222222222",
+  "branchName": "Campinas",
+  "items": [
+    { "productId": "55555555-5555-5555-5555-555555555555", "productName": "Water", "quantity": 4, "unitPrice": 25.00 }
+  ]
+}
+
+### Cancel a single item (raises ItemCancelled)
+POST {{salesUrl}}/00000000-0000-0000-0000-000000000000/items/00000000-0000-0000-0000-000000000000/cancel
+
+### Cancel the whole sale (raises SaleCancelled)
+POST {{salesUrl}}/00000000-0000-0000-0000-000000000000/cancel
+
+### Delete a sale
+DELETE {{salesUrl}}/00000000-0000-0000-0000-000000000000
